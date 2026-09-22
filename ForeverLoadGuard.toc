@@ -1,0 +1,7 @@
+## Interface: 120105
+## Title: Forever Load Guard
+## Notes: Cold-load guard for the Forever Beta lighting/GPU hang: stores your lighting prefs, loads Fair, restores them after entering world
+## Version: 1.0
+## SavedVariables: ForeverLoadGuardDB
+
+ForeverLoadGuard.lua
