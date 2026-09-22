@@ -9,7 +9,7 @@ optional manual override.
 
 ## Install
 
-1. Download [ForeverLoadGuard-v1.0.1.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.1/ForeverLoadGuard-v1.0.1.zip)
+1. Download [ForeverLoadGuard-v1.0.2.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.2/ForeverLoadGuard-v1.0.2.zip)
    from [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases/latest).
 2. Extract the zip and copy its `ForeverLoadGuard` folder to:
    `World of Warcraft/_classic_beta_/Interface/AddOns/`
@@ -25,9 +25,10 @@ git clone https://github.com/suvikyi/ForeverLoadGuard.git
 
 ## Usage
 
-- **First use:** enter the world and choose your preferred Secondary Lighting
-  in Options, then zone out or log out to have it remembered. If you already
-  use Fair to get into the game, keep it for that first login.
+- **First use:** if your lighting is above Fair, the addon remembers it before
+  applying Fair for loading. If you started on Fair to get into the game, enter
+  the world, choose your preferred Secondary Lighting in Options, then zone out
+  or log out to have it remembered.
 - **Normal play:** Fair is applied automatically for loading; your preferences
   return after five seconds. Restoration waits until combat ends if necessary.
 - **`/reload`:** Fair is temporary while the UI reloads. Your saved lighting

@@ -11,8 +11,8 @@ end
 
 function string:trim() return self:match("^%s*(.-)%s*$") end
 
-local function setup(prefs, absent)
-    local live, timers, frame, combat = copy(SAFE), {}, nil, false
+local function setup(prefs, absent, startingValues)
+    local live, timers, frame, combat = copy(startingValues or SAFE), {}, nil, false
     if absent then live[absent] = nil end
     local env = setmetatable({
         SlashCmdList = {},
@@ -72,6 +72,13 @@ local function login(s)
 end
 
 local cases = {
+    { "first install remembers existing higher lighting before forcing Fair", function()
+        local s = setup(nil, nil, HIGH)
+        s.stored(HIGH)
+        login(s); s.live(SAFE); s.stored(HIGH)
+        s.tick(); s.live(HIGH)
+        s.event("PLAYER_LOGOUT"); s.live(SAFE); s.stored(HIGH)
+    end },
     { "normal login, zone and logout", function()
         local s = setup(HIGH)
         login(s); s.live(SAFE); s.tick(); s.live(HIGH)

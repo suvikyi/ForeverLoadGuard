@@ -1,4 +1,4 @@
--- ForeverLoadGuard 1.0.1 — Forever Beta cold-load guard.
+-- ForeverLoadGuard 1.0.2 — Forever Beta cold-load guard.
 --
 -- The Forever Beta (1.60.1.69913) can hang the GPU while constructing the
 -- first world frame when Secondary Lighting is above Fair, wedging the
@@ -7,9 +7,8 @@
 --
 -- Design: your real prefs live in ForeverLoadGuardDB (disk, per account).
 -- They are captured from whatever is live at zone-out/logout (i.e. what you
--- actually play with), never at first install — most people install this
--- while already on Fair just to get in, and snapshotting that would
--- memorize the workaround as the preference.
+-- actually play with). On first login, non-Fair settings are saved before
+-- lowering them; Fair is left unsaved because it may be a temporary workaround.
 -- The on-disk Config.wtf is always left at Fair so the next cold load is
 -- safe; your prefs are restored live a few seconds after each world load.
 -- Fair == graphicsLightMode 0 / giQuality 1. Never giQuality 0: that asserts
@@ -99,6 +98,14 @@ function f:CapturePrefs()
     end
 end
 
+function f:CaptureInitialPrefs()
+    if ForeverLoadGuardDB.prefs then return end
+    local live = GetLive()
+    if not IsSafe(live) then
+        ForeverLoadGuardDB.prefs = live
+    end
+end
+
 function f:ApplySafe()
     self:CancelPendingRestore()
     self.safeApplied = true
@@ -143,15 +150,13 @@ f:RegisterEvent("PLAYER_REGEN_ENABLED")
 f:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == "ForeverLoadGuard" then
         ForeverLoadGuardDB = ForeverLoadGuardDB or {}
+        self:CaptureInitialPrefs()
+    elseif event == "PLAYER_LOGIN" then
+        self:CaptureInitialPrefs()
+        self:ApplySafe()
         if not ForeverLoadGuardDB.prefs then
-            -- No snapshot here on purpose: most people install this while
-            -- already on Fair (the only way to get in at all), so the live
-            -- values are the workaround, not the preference. Real prefs are
-            -- captured at zone-out/logout below, once live != Fair.
             print(PREFIX .. "no stored settings yet. Set your desired lighting in Options while in-world; I will remember it when you zone out or log out.")
         end
-    elseif event == "PLAYER_LOGIN" then
-        self:ApplySafe()
     elseif event == "PLAYER_ENTERING_WORLD" then
         self:ScheduleRestore("enter-world")
     elseif event == "PLAYER_LEAVING_WORLD" then
