@@ -30,9 +30,14 @@ git clone https://github.com/suvikyi/ForeverLoadGuard.git
   use Fair to get into the game, keep it for that first login.
 - **Normal play:** Fair is applied automatically for loading; your preferences
   return after five seconds. Restoration waits until combat ends if necessary.
-- **Logout or `/reload`:** lighting is left at Fair for the next login.
-  Preferences are shared across your account and saved to disk on a normal
-  logout or `/reload`.
+- **`/reload`:** Fair is temporary while the UI reloads. Your saved lighting
+  settings return automatically five seconds after world entry, with restoration
+  deferred if you're in combat. No command is needed to restore them.
+- **Logout:** Fair is saved for the next login's loading screen; your preferred
+  lighting returns automatically after world entry.
+
+Preferences are shared across your account and saved to disk on a normal
+logout or `/reload`.
 
 ## Optional commands
 
