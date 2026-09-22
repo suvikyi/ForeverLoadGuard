@@ -3,9 +3,6 @@
 An automatic workaround for the Secondary Lighting loading hang in
 WoW: Forever Beta (`1.60.1.69913`).
 
-**No commands are required for automatic protection.** `/flg safe` is an
-optional manual override.
-
 ## What happens automatically
 
 1. **During loading:** the addon applies Fair at login and zone transitions.
