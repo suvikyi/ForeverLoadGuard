@@ -1,4 +1,4 @@
--- ForeverLoadGuard 1.0.3 — Forever Beta cold-load guard.
+-- ForeverLoadGuard — Forever Beta cold-load guard.
 --
 -- The Forever Beta (1.60.1.69913) can hang the GPU while constructing the
 -- first world frame when Secondary Lighting is above Fair, wedging the
@@ -7,12 +7,14 @@
 --
 -- Design: your real prefs live in ForeverLoadGuardDB (disk, per account).
 -- They are captured from whatever is live at zone-out/logout (i.e. what you
--- actually play with). On first login, non-Fair settings are saved before
--- lowering them; Fair is left unsaved because it may be a temporary workaround.
+-- actually play with). With no saved preference, start with Good after entry:
+-- most people install while already on Fair just to get into the game.
 -- The on-disk Config.wtf is always left at Fair so the next cold load is
 -- safe; your prefs are restored live a few seconds after each world load.
 -- Fair == graphicsLightMode 0 / giQuality 1. Never giQuality 0: that asserts
 -- ("GI cascade scale ratio must be an even integer", WorldGlobalIllumination.cpp).
+
+local VERSION = "1.0.4"
 
 local CVARS = {
     "graphicsLightMode",
@@ -29,10 +31,23 @@ local SAFE = {
     RAIDgiQuality = "1",
 }
 
+local DEFAULT = {
+    graphicsLightMode = "1",
+    raidGraphicsLightMode = "1",
+    giQuality = "2",
+    RAIDgiQuality = "2",
+}
+
 local RESTORE_DELAY = 5            -- s after entering world before restoring prefs
 local LOWER_ON_ZONE_CHANGE = true  -- also drop to Fair on every loading screen
 
 local PREFIX = "|cffffff00[LoadGuard]|r "
+
+local function Debug(message)
+    if ForeverLoadGuardDB and ForeverLoadGuardDB.debug then
+        print(PREFIX .. "[debug] " .. message)
+    end
+end
 
 local function GetLive()
     local t = {}
@@ -95,17 +110,9 @@ function f:CapturePrefs(reason)
     -- restoring the user's settings is a real preference too.
     if not self.safeApplied or not IsSafe(live) then
         ForeverLoadGuardDB.prefs = live
-        print(PREFIX .. "remembered settings (" .. reason .. "): " .. Describe(live))
+        Debug("remembered settings (" .. reason .. "): " .. Describe(live))
     else
-        print(PREFIX .. "kept stored settings (" .. reason .. "); live Fair is temporary")
-    end
-end
-
-function f:CaptureInitialPrefs()
-    if ForeverLoadGuardDB.prefs then return end
-    local live = GetLive()
-    if not IsSafe(live) then
-        ForeverLoadGuardDB.prefs = live
+        Debug("kept stored settings (" .. reason .. "); live Fair is temporary")
     end
 end
 
@@ -113,19 +120,19 @@ function f:ApplySafe(reason)
     self:CancelPendingRestore()
     self.safeApplied = true
     Apply(SAFE)
-    print(PREFIX .. "applied Fair (" .. reason .. "): " .. Describe(GetLive()))
+    Debug("applied Fair (" .. reason .. "): " .. Describe(GetLive()))
 end
 
 function f:RestorePrefs(reason)
     self.deferredRestore = false
     local prefs = ForeverLoadGuardDB and ForeverLoadGuardDB.prefs
     if not prefs then
-        print(PREFIX .. "restore skipped (" .. reason .. "): no stored settings yet")
+        Debug("restore skipped (" .. reason .. "): no stored settings yet")
         return
     end
     if SameAsLive(prefs) then
         self.safeApplied = false
-        print(PREFIX .. "restore skipped (" .. reason .. "): live already matches stored settings")
+        Debug("restore skipped (" .. reason .. "): live already matches stored settings")
         return
     end
     if InCombatLockdown() then
@@ -136,10 +143,14 @@ function f:RestorePrefs(reason)
     Apply(prefs)
     self.safeApplied = false
     if SameAsLive(prefs) then
-        print(PREFIX .. "restored settings (" .. reason .. "): " .. Describe(GetLive()))
+        if reason ~= "enter-world" then
+            print(PREFIX .. "restored settings (" .. reason .. "): " .. Describe(GetLive()))
+        else
+            Debug("restored settings (" .. reason .. "): " .. Describe(GetLive()))
+        end
     else
-        print(PREFIX .. "restore incomplete (" .. reason .. "); live: " .. Describe(GetLive()))
-        print(PREFIX .. "stored: " .. Describe(prefs))
+        Debug("restore incomplete (" .. reason .. "); live: " .. Describe(GetLive()))
+        Debug("stored: " .. Describe(prefs))
     end
 end
 
@@ -149,7 +160,7 @@ function f:ScheduleRestore(reason)
         self.restoreTimer = nil
         self:RestorePrefs(reason)
     end)
-    print(PREFIX .. "restore scheduled in " .. RESTORE_DELAY .. "s (" .. reason .. ")")
+    Debug("restore scheduled in " .. RESTORE_DELAY .. "s (" .. reason .. ")")
 end
 
 f:RegisterEvent("ADDON_LOADED")
@@ -162,16 +173,18 @@ f:RegisterEvent("PLAYER_REGEN_ENABLED")
 f:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == "ForeverLoadGuard" then
         ForeverLoadGuardDB = ForeverLoadGuardDB or {}
-        self:CaptureInitialPrefs()
-        print(PREFIX .. "loaded; live: " .. Describe(GetLive()))
-        print(PREFIX .. "stored: " .. (ForeverLoadGuardDB.prefs and Describe(ForeverLoadGuardDB.prefs) or "<none>"))
-    elseif event == "PLAYER_LOGIN" then
-        self:CaptureInitialPrefs()
-        print(PREFIX .. "login stored: " .. (ForeverLoadGuardDB.prefs and Describe(ForeverLoadGuardDB.prefs) or "<none>"))
-        self:ApplySafe("login")
-        if not ForeverLoadGuardDB.prefs then
-            print(PREFIX .. "no stored settings yet. Set your desired lighting in Options while in-world; I will remember it when you zone out or log out.")
+        if not ForeverLoadGuardDB.prefs or not next(ForeverLoadGuardDB.prefs) then
+            ForeverLoadGuardDB.prefs = {}
+            for _, name in ipairs(CVARS) do
+                ForeverLoadGuardDB.prefs[name] = DEFAULT[name]
+            end
+            print(PREFIX .. "using Good after loading until you choose your own lighting. Changes in Options are remembered when you zone out, log out or /reload.")
         end
+        Debug("loaded v" .. VERSION .. "; live: " .. Describe(GetLive()))
+        Debug("stored: " .. Describe(ForeverLoadGuardDB.prefs))
+    elseif event == "PLAYER_LOGIN" then
+        Debug("login stored: " .. Describe(ForeverLoadGuardDB.prefs))
+        self:ApplySafe("login")
     elseif event == "PLAYER_ENTERING_WORLD" then
         self:ScheduleRestore("enter-world")
     elseif event == "PLAYER_LEAVING_WORLD" then
@@ -199,16 +212,23 @@ SlashCmdList.FLG = function(msg)
         local prefs = ForeverLoadGuardDB and ForeverLoadGuardDB.prefs
         print(PREFIX .. "live:   " .. Describe(GetLive()))
         print(PREFIX .. "stored: " .. (prefs and Describe(prefs) or "<none>"))
+        print(PREFIX .. "v" .. VERSION .. "; debug: " .. (ForeverLoadGuardDB.debug and "on" or "off"))
     elseif msg == "restore" then
         f:CancelPendingRestore()
         f:RestorePrefs("manual")
     elseif msg == "safe" then
         f:ApplySafe("manual")
+        print(PREFIX .. "forced safe (Fair).")
     elseif msg == "forget" then
         ForeverLoadGuardDB.prefs = GetLive()
         f.safeApplied = false
         print(PREFIX .. "re-stored current settings: " .. Describe(ForeverLoadGuardDB.prefs))
+    elseif msg == "debug toggle" then
+        ForeverLoadGuardDB.debug = not ForeverLoadGuardDB.debug
+        print(PREFIX .. "debug " .. (ForeverLoadGuardDB.debug and "enabled" or "disabled"))
+        Debug("live: " .. Describe(GetLive()))
+        Debug("stored: " .. Describe(ForeverLoadGuardDB.prefs))
     else
-        print(PREFIX .. "usage: /flg status|restore|safe|forget")
+        print(PREFIX .. "usage: /flg status|restore|safe|forget|debug toggle")
     end
 end

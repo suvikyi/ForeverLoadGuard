@@ -1,6 +1,7 @@
 -- Run from the repository root: lua5.1 tests/events.lua
 -- Simulates Lua event/state behavior; does not emulate the game renderer or disk writes.
 local SAFE = { graphicsLightMode = "0", raidGraphicsLightMode = "0", giQuality = "1", RAIDgiQuality = "1" }
+local GOOD = { graphicsLightMode = "1", raidGraphicsLightMode = "1", giQuality = "2", RAIDgiQuality = "2" }
 local HIGH = { graphicsLightMode = "2", raidGraphicsLightMode = "2", giQuality = "3", RAIDgiQuality = "3" }
 
 local function copy(values)
@@ -11,13 +12,16 @@ end
 
 function string:trim() return self:match("^%s*(.-)%s*$") end
 
-local function setup(prefs, absent, startingValues)
+local function setup(prefs, absent, startingValues, debugEnabled)
     local live, timers, frame, combat = copy(startingValues or SAFE), {}, nil, false
     local messages = {}
     if absent then live[absent] = nil end
     local env = setmetatable({
         SlashCmdList = {},
-        ForeverLoadGuardDB = prefs and { prefs = copy(prefs) } or nil,
+        ForeverLoadGuardDB = (prefs or debugEnabled ~= nil) and {
+            prefs = prefs and copy(prefs) or nil,
+            debug = debugEnabled,
+        } or nil,
         print = function(message) messages[#messages + 1] = message end,
         GetCVar = function(name) return live[name] end,
         SetCVar = function(name, value)
@@ -74,13 +78,25 @@ local function login(s)
 end
 
 local cases = {
-    { "first install remembers existing higher lighting before forcing Fair", function()
-        local s = setup(nil, nil, HIGH)
-        s.stored(HIGH)
-        login(s); s.live(SAFE); s.stored(HIGH)
-        s.tick(); s.live(HIGH)
-        assert(s.logs():find("restored settings %(enter%-world%)"), "missing restore confirmation")
-        s.event("PLAYER_LOGOUT"); s.live(SAFE); s.stored(HIGH)
+    { "first login on Fair restores Good without manual setup", function()
+        local s = setup()
+        login(s); s.live(SAFE); s.stored(GOOD)
+        s.tick(); s.live(GOOD)
+        s.event("PLAYER_LOGOUT"); s.live(SAFE); s.stored(GOOD)
+    end },
+    { "early reload preserves the first-login Good default", function()
+        local s = setup()
+        login(s); s.event("PLAYER_LOGOUT"); s.stored(GOOD)
+        local reloaded = setup(s.env.ForeverLoadGuardDB.prefs)
+        login(reloaded); reloaded.live(SAFE); reloaded.tick(); reloaded.live(GOOD)
+    end },
+    { "explicitly saved Fair is never replaced by default Good", function()
+        local s = setup(SAFE)
+        login(s); s.tick(); s.live(SAFE); s.stored(SAFE)
+    end },
+    { "empty preferences from an earlier install use Good", function()
+        local s = setup({})
+        login(s); s.tick(); s.live(GOOD); s.stored(GOOD)
     end },
     { "normal login, zone and logout", function()
         local s = setup(HIGH)
@@ -121,13 +137,11 @@ local cases = {
         local s = setup(HIGH)
         login(s); s.tick(); s.set(SAFE); s.event("PLAYER_LOGOUT"); s.stored(SAFE)
     end },
-    { "first install waits for user preferences", function()
+    { "normal Options changes replace Good and survive a fresh reload", function()
         local s = setup()
-        login(s); s.tick(); s.event("PLAYER_LEAVING_WORLD"); s.event("PLAYER_LOGOUT")
-        assert(s.env.ForeverLoadGuardDB.prefs == nil)
-        assert(s.logs():find("restore skipped %(enter%-world%): no stored settings yet"), "missing no-prefs diagnostic")
-        login(s); s.tick(); s.set(HIGH); s.event("PLAYER_LEAVING_WORLD"); s.stored(HIGH)
-        s.event("PLAYER_LOGOUT"); s.stored(HIGH)
+        login(s); s.tick(); s.set(HIGH); s.event("PLAYER_LOGOUT"); s.stored(HIGH)
+        local reloaded = setup(s.env.ForeverLoadGuardDB.prefs)
+        login(reloaded); reloaded.live(SAFE); reloaded.tick(); reloaded.live(HIGH)
     end },
     { "manual snapshot can remember Fair", function()
         local s = setup(HIGH)
@@ -136,6 +150,24 @@ local cases = {
     { "unsupported CVar does not abort login", function()
         local s = setup(HIGH, "RAIDgiQuality")
         login(s); s.live(SAFE); s.tick(); s.live(HIGH)
+    end },
+    { "automatic diagnostics are off by default", function()
+        local s = setup(GOOD)
+        login(s); s.tick(); s.event("PLAYER_LEAVING_WORLD"); s.event("PLAYER_LOGOUT")
+        assert(s.logs() == "", "automatic flow printed with debug off")
+    end },
+    { "debug toggle persists through reload and disables diagnostics again", function()
+        local s = setup(GOOD)
+        s.command("debug toggle"); assert(s.env.ForeverLoadGuardDB.debug == true)
+        login(s); s.tick(); s.event("PLAYER_LOGOUT")
+        local reloaded = setup(s.env.ForeverLoadGuardDB.prefs, nil, SAFE, s.env.ForeverLoadGuardDB.debug)
+        login(reloaded); reloaded.tick()
+        assert(reloaded.logs():find("restore scheduled in 5s", 1, true))
+        assert(reloaded.logs():find("restored settings (enter-world)", 1, true))
+        reloaded.command("debug toggle"); assert(reloaded.env.ForeverLoadGuardDB.debug == false)
+        local before = reloaded.logs()
+        reloaded.event("PLAYER_LEAVING_WORLD"); reloaded.event("PLAYER_ENTERING_WORLD"); reloaded.tick()
+        assert(reloaded.logs() == before, "debug output continued after disabling")
     end },
 }
 
