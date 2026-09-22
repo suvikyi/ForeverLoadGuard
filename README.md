@@ -6,7 +6,7 @@ Secondary Lighting above Fair can wedge the graphics queue
 every world at Fair, then restores your own lighting a few seconds later.
 Your prefs are remembered at zone-out/logout; the disk config stays Fair.
 
-## Install — release zip (recommended)
+## Install — release zip
 
 1. Download `ForeverLoadGuard-v1.0.zip` from
    [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases).
@@ -14,7 +14,7 @@ Your prefs are remembered at zone-out/logout; the disk config stays Fair.
    `World of Warcraft/_classic_beta_/Interface/AddOns/`
 3. Launch the game (or `/reload`), then run `/flg status`.
 
-## Install — git clone (advanced)
+## Install — git clone
 
 ```bash
 cd "World of Warcraft/_classic_beta_/Interface/AddOns"
