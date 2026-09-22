@@ -8,6 +8,9 @@ Your prefs are remembered at zone-out/logout; the disk config stays Fair.
 
 ## Install — release zip
 
+The v1.0 zip predates the latest fixes. Use the git instructions below for
+the current code.
+
 1. Download `ForeverLoadGuard-v1.0.zip` from
    [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases).
 2. Copy the `ForeverLoadGuard` folder from the zip to:
@@ -29,10 +32,25 @@ Already on Fair just to get in? Expected. Enter the world, set your
 lighting in Options, then zone out or log out once — that's when it's
 remembered. From then on: Fair on every load, yours after entry.
 
-If the client flags it out of date, run `/dump select(4, GetBuildInfo())`
-and put that number in `## Interface:` in `ForeverLoadGuard.toc`.
+Forever Beta build `1.60.1.69913` uses TOC interface `16001`, independently
+[confirmed in-game](https://github.com/Ninjaskurk/forever-mouse-tooltip#notes-on-the-interface-version).
+The executable build number (`69913`) and TOC interface number are different.
+If a later client flags it out of date, run `/dump select(4, GetBuildInfo())`
+and put the returned interface number in `## Interface:` in `ForeverLoadGuard.toc`.
 
 ## Commands
 
 `/flg status` — live vs stored settings · `/flg restore` — restore now ·
 `/flg safe` — force Fair · `/flg forget` — store current settings now
+
+`/flg safe` cancels both pending and combat-deferred restores until the
+next world entry (or `/flg restore`). It preserves your stored preferences.
+To make Fair your remembered preference immediately, run `/flg safe` then
+`/flg forget`. Choosing Fair in Options after your settings have been
+restored is also remembered when you zone out or log out.
+
+## Tests
+
+Run `lua5.1 tests/events.lua` (or `luajit tests/events.lua`) from the repository
+root. These tests simulate addon events, CVars and timers; they do not run
+the game client or verify GPU behavior.
