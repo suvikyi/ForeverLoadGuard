@@ -3,7 +3,7 @@
 An automatic workaround for the Secondary Lighting loading hang in
 WoW: Forever Beta (`1.60.1.69913`).
 
-Defaults to setting "Good" for lighting after the first login (5s timer), then tracks your preference automatically so values higher than "Good" can be used".
+Defaults to setting "Good" for lighting after the first login (5s timer), then tracks your preference automatically so values higher (or lower) than "Good" can be used.
 
 ## What happens automatically
 
