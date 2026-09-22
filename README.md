@@ -1,50 +1,58 @@
 # ForeverLoadGuard
 
-Stops the WoW: Forever Beta (`1.60.1.69913`) GPU hang on world entry:
-Secondary Lighting above Fair can wedge the graphics queue
-(`WaitForFence` / `GPU Hung` / Xid 109 → `ERROR #109`). The addon loads
-every world at Fair, then restores your own lighting a few seconds later.
-Your prefs are remembered at zone-out/logout; the disk config stays Fair.
+An automatic workaround for the Secondary Lighting loading hang in
+WoW: Forever Beta (`1.60.1.69913`). Applies Fair at login and zone transitions,
+then restores your saved lighting settings five seconds after world entry.
 
-## Install — release zip
+**No commands are required for automatic protection.** `/flg safe` is an
+optional manual override.
+
+## Install
 
 1. Download [ForeverLoadGuard-v1.0.1.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.1/ForeverLoadGuard-v1.0.1.zip)
    from [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases/latest).
-2. Copy the `ForeverLoadGuard` folder from the zip to:
+2. Extract the zip and copy its `ForeverLoadGuard` folder to:
    `World of Warcraft/_classic_beta_/Interface/AddOns/`
-3. Launch the game (or `/reload`), then run `/flg status`.
+   Replace the existing addon files if updating; saved preferences are retained.
+3. Restart WoW and enable Forever Load Guard in the AddOns list.
 
-## Install — git clone
+Alternatively, clone into `AddOns`, then restart WoW and enable the addon:
 
 ```bash
 cd "World of Warcraft/_classic_beta_/Interface/AddOns"
 git clone https://github.com/suvikyi/ForeverLoadGuard.git
 ```
 
-Then `/reload` or relaunch, and `/flg status`.
+## Usage
 
-## First run
+- **First use:** enter the world and choose your preferred Secondary Lighting
+  in Options, then zone out or log out to have it remembered. If you already
+  use Fair to get into the game, keep it for that first login.
+- **Normal play:** Fair is applied automatically for loading; your preferences
+  return after five seconds. Restoration waits until combat ends if necessary.
+- **Logout or `/reload`:** lighting is left at Fair for the next login.
+  Preferences are shared across your account and saved to disk on a normal
+  logout or `/reload`.
 
-Already on Fair just to get in? Expected. Enter the world, set your
-lighting in Options, then zone out or log out once — that's when it's
-remembered. From then on: Fair on every load, yours after entry.
+## Optional commands
 
-Forever Beta build `1.60.1.69913` uses TOC interface `16001`, independently
-[confirmed in-game](https://github.com/Ninjaskurk/forever-mouse-tooltip#notes-on-the-interface-version).
-The executable build number (`69913`) and TOC interface number are different.
-If a later client flags it out of date, run `/dump select(4, GetBuildInfo())`
-and put the returned interface number in `## Interface:` in `ForeverLoadGuard.toc`.
+| Command | Effect |
+| --- | --- |
+| `/flg status` | Show live and stored lighting settings. |
+| `/flg safe` | Manually force Fair and cancel pending or combat-deferred restoration until the next world entry or `/flg restore`. Keeps stored preferences. |
+| `/flg restore` | Restore stored preferences now, or defer until combat ends. |
+| `/flg forget` | Replace stored preferences with the current settings. Does not delete them. |
 
-## Commands
+To remember Fair immediately, run `/flg safe` followed by `/flg forget`.
+You can also choose Fair in Options after restoration and then zone out or log out.
+`/slfix` is an alias for `/flg`.
 
-`/flg status` — live vs stored settings · `/flg restore` — restore now ·
-`/flg safe` — force Fair · `/flg forget` — store current settings now
+## Compatibility
 
-`/flg safe` cancels both pending and combat-deferred restores until the
-next world entry (or `/flg restore`). It preserves your stored preferences.
-To make Fair your remembered preference immediately, run `/flg safe` then
-`/flg forget`. Choosing Fair in Options after your settings have been
-restored is also remembered when you zone out or log out.
+Targets Forever Beta build `1.60.1.69913`, interface `16001`
+([in-game confirmation](https://github.com/Ninjaskurk/forever-mouse-tooltip#notes-on-the-interface-version)).
+If a later beta marks the addon out of date, check for an updated release.
+`/dump select(4, GetBuildInfo())` shows your client's interface number.
 
 ## Tests
 
