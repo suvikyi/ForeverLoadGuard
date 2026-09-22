@@ -9,7 +9,7 @@ optional manual override.
 
 ## Install
 
-1. Download [ForeverLoadGuard-v1.0.2.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.2/ForeverLoadGuard-v1.0.2.zip)
+1. Download [ForeverLoadGuard-v1.0.3.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.3/ForeverLoadGuard-v1.0.3.zip)
    from [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases/latest).
 2. Extract the zip and copy its `ForeverLoadGuard` folder to:
    `World of Warcraft/_classic_beta_/Interface/AddOns/`
@@ -39,6 +39,11 @@ git clone https://github.com/suvikyi/ForeverLoadGuard.git
 
 Preferences are shared across your account and saved to disk on a normal
 logout or `/reload`.
+
+The addon prints what it reads, when it applies Fair, when restoration is
+scheduled, and whether restoration succeeded. If it says **no stored settings
+yet**, it has nothing to restore: choose your preferred lighting in Options
+while in the world, then zone out or log out once.
 
 ## Optional commands
 

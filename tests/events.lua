@@ -13,11 +13,12 @@ function string:trim() return self:match("^%s*(.-)%s*$") end
 
 local function setup(prefs, absent, startingValues)
     local live, timers, frame, combat = copy(startingValues or SAFE), {}, nil, false
+    local messages = {}
     if absent then live[absent] = nil end
     local env = setmetatable({
         SlashCmdList = {},
         ForeverLoadGuardDB = prefs and { prefs = copy(prefs) } or nil,
-        print = function() end,
+        print = function(message) messages[#messages + 1] = message end,
         GetCVar = function(name) return live[name] end,
         SetCVar = function(name, value)
             if name == absent then return nil end
@@ -44,6 +45,7 @@ local function setup(prefs, absent, startingValues)
     event("ADDON_LOADED", "ForeverLoadGuard")
     return {
         env = env, event = event, command = env.SlashCmdList.FLG,
+        logs = function() return table.concat(messages, "\n") end,
         combat = function(value) combat = value end,
         set = function(values) for name, value in pairs(values) do live[name] = value end end,
         tick = function()
@@ -77,6 +79,7 @@ local cases = {
         s.stored(HIGH)
         login(s); s.live(SAFE); s.stored(HIGH)
         s.tick(); s.live(HIGH)
+        assert(s.logs():find("restored settings %(enter%-world%)"), "missing restore confirmation")
         s.event("PLAYER_LOGOUT"); s.live(SAFE); s.stored(HIGH)
     end },
     { "normal login, zone and logout", function()
@@ -122,6 +125,7 @@ local cases = {
         local s = setup()
         login(s); s.tick(); s.event("PLAYER_LEAVING_WORLD"); s.event("PLAYER_LOGOUT")
         assert(s.env.ForeverLoadGuardDB.prefs == nil)
+        assert(s.logs():find("restore skipped %(enter%-world%): no stored settings yet"), "missing no-prefs diagnostic")
         login(s); s.tick(); s.set(HIGH); s.event("PLAYER_LEAVING_WORLD"); s.stored(HIGH)
         s.event("PLAYER_LOGOUT"); s.stored(HIGH)
     end },
