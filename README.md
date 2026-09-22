@@ -8,11 +8,8 @@ Your prefs are remembered at zone-out/logout; the disk config stays Fair.
 
 ## Install — release zip
 
-The v1.0 zip predates the latest fixes. Use the git instructions below for
-the current code.
-
-1. Download `ForeverLoadGuard-v1.0.zip` from
-   [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases).
+1. Download [ForeverLoadGuard-v1.0.1.zip](https://github.com/suvikyi/ForeverLoadGuard/releases/download/v1.0.1/ForeverLoadGuard-v1.0.1.zip)
+   from [Releases](https://github.com/suvikyi/ForeverLoadGuard/releases/latest).
 2. Copy the `ForeverLoadGuard` folder from the zip to:
    `World of Warcraft/_classic_beta_/Interface/AddOns/`
 3. Launch the game (or `/reload`), then run `/flg status`.

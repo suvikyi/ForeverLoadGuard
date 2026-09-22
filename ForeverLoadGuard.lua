@@ -1,4 +1,4 @@
--- ForeverLoadGuard 1.0 — Forever Beta cold-load guard.
+-- ForeverLoadGuard 1.0.1 — Forever Beta cold-load guard.
 --
 -- The Forever Beta (1.60.1.69913) can hang the GPU while constructing the
 -- first world frame when Secondary Lighting is above Fair, wedging the
